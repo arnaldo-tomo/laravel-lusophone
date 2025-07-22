@@ -1,82 +1,178 @@
-# 🌍 Laravel Lusophone
+# Laravel PT-PT Localization
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/arnaldotomo/laravel-lusophone.svg?style=flat-square)](https://packagist.org/packages/arnaldotomo/laravel-lusophone)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/arnaldo-tomo/laravel-lusophone/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/arnaldo-tomo/laravel-lusophone/actions?query=workflow%3Atests+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/arnaldotomo/laravel-lusophone.svg?style=flat-square)](https://packagist.org/packages/arnaldotomo/laravel-lusophone)
+📦 **Ficheiros de idioma em Português de Portugal (pt-PT) para Laravel**
 
-**The first truly comprehensive Portuguese localization package for Laravel applications.**
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/arnaldotomo/laravel-pt-pt-localization.svg?style=flat-square)](https://packagist.org/packages/arnaldotomo/laravel-pt-pt-localization)
+[![Total Downloads](https://img.shields.io/packagist/dt/arnaldotomo/laravel-pt-pt-localization.svg?style=flat-square)](https://packagist.org/packages/arnaldotomo/laravel-pt-pt-localization)
 
-Laravel Lusophone automatically detects your users' location and adapts your application to their specific Portuguese variant, cultural context, and local validation requirements. Built in 🇲🇿 **Mozambique** for the entire **Lusophone world** 🌍.
+## 🇵🇹 Sobre
 
----
+Este pacote fornece traduções completas do Laravel para **Português de Portugal (pt-PT)**, incluindo todas as mensagens de validação, autenticação, paginação e outras strings padrão do framework.
 
-## 🚀 **Why Laravel Lusophone?**
+### Diferenças principais do Português do Brasil (pt-BR):
+- Uso de "correio electrónico" em vez de "e-mail"
+- "Telemóvel" em vez de "celular"  
+- "Utilizador" em vez de "usuário"
+- "Palavra-passe" em vez de "senha"
+- "Ficheiro" em vez de "arquivo"
+- Concordância verbal e nominal específica do português europeu
 
-### **🎯 One Package, 260M+ Users**
-- **🇵🇹 Portugal**: Formal European Portuguese, NIF validation, EUR formatting
-- **🇧🇷 Brasil**: Informal Brazilian Portuguese, CPF validation, BRL formatting  
-- **🇲🇿 Moçambique**: Mixed terminology, NUIT validation, MZN formatting
-- **🇦🇴 Angola**: Formal Portuguese, Angolan NIF, AOA formatting
-- **🇨🇻 Cabo Verde**: CV-specific validation, CVE formatting
-- **+ 3 more countries** (Guinea-Bissau, São Tomé, Timor-Leste)
+## 📋 Versões Suportadas
 
-### **🧠 Smart & Automatic**
-- ✅ **Zero Configuration**: Works out of the box
-- ✅ **Auto Region Detection**: IP, headers, language preferences  
-- ✅ **Cultural Context**: Adapts formality and terminology
-- ✅ **Universal Validation**: One rule works across all countries
-- ✅ **Performance Optimized**: Intelligent caching and lazy loading
+| Laravel | Versão do Pacote |
+|---------|------------------|
+| 12.x    | ✅ 1.0+         |
+| 11.x    | ✅ 1.0+         |
+| 10.x    | ✅ 1.0+         |
 
-### **🔥 Unique Features**
-- 🌍 **First Laravel package** to serve the entire Lusophone world
-- 🎭 **Cultural Context Awareness**: Business vs casual vs government
-- ✅ **Smart Validators**: NIF, NUIT, CPF, phone numbers, postal codes
-- �� **Currency Formatting**: Automatic local currency display
-- 📱 **Mobile Optimized**: Touch-friendly interfaces
+## 📥 Instalação
 
----
-
-## 📥 **Installation**
-
-### **1. Install via Composer**
+### 1. Instalar via Composer
 
 ```bash
-composer require arnaldotomo/laravel-lusophone
-cat > CHANGELOG.md << 'EOF'
-# Changelog
+composer require arnaldotomo/laravel-pt-pt-localization --dev
+```
 
-All notable changes to `laravel-lusophone` will be documented in this file.
+### 2. Publicar as traduções
 
-## [1.0.0] - 2025-07-22
+Para Laravel 11.x e 12.x:
 
-### Added
-- Initial release of Laravel Lusophone package
-- Automatic region detection for all Lusophone countries
-- Universal validation rules (lusophone_tax_id, lusophone_phone, lusophone_postal)
-- Country-specific validators (NIF Portugal, NUIT Mozambique, CPF Brazil, etc.)
-- Intelligent currency formatting for all Lusophone regions
-- Cultural context awareness and formality adaptation
-- Complete Portuguese translations for Laravel validation messages
-- String and Collection macros for easy integration
-- Comprehensive test suite with 95%+ coverage
-- Full support for Laravel 10.x, 11.x, and 12.x
+```bash
+# Primeiro, publicar a estrutura de idiomas
+php artisan lang:publish
 
-### Supported Countries
-- 🇵🇹 Portugal (NIF validation, EUR formatting)
-- 🇧🇷 Brasil (CPF validation, BRL formatting)
-- 🇲🇿 Moçambique (NUIT validation, MZN formatting)
-- 🇦🇴 Angola (NIF validation, AOA formatting)
-- 🇨🇻 Cabo Verde (NIF validation, CVE formatting)
-- 🇬🇼 Guiné-Bissau (Basic support)
-- 🇸🇹 São Tomé e Príncipe (Basic support)
-- 🇹🇱 Timor-Leste (Basic support)
+# Depois, publicar as traduções PT-PT
+php artisan vendor:publish --tag=laravel-pt-pt-localization
+```
 
-### Features
-- Zero-configuration setup
-- Automatic IP-based region detection
-- HTTP headers support (CloudFlare, AWS)
-- Accept-Language header parsing
-- Session-based caching for performance
-- Facade for easy access
-- Comprehensive validation error messages
-- Cultural context adaptation
+Para Laravel 10.x e anteriores:
+
+```bash
+php artisan vendor:publish --tag=laravel-pt-pt-localization
+```
+
+### 3. Configurar o idioma
+
+**Para Laravel 11.x e 12.x**, altere o ficheiro `.env`:
+
+```env
+APP_LOCALE=pt_PT
+```
+
+**Para Laravel 10.x e anteriores**, altere a linha no ficheiro `config/app.php`:
+
+```php
+'locale' => 'pt_PT',
+```
+
+## 📁 Estrutura dos Ficheiros
+
+O pacote inclui traduções para:
+
+```
+resources/lang/pt_PT/
+├── auth.php              # Autenticação
+├── pagination.php        # Paginação
+├── passwords.php         # Redefinição de palavra-passe
+└── validation.php        # Validação de formulários
+```
+
+## 🚀 Utilização
+
+Após a instalação, todas as mensagens do Laravel serão automaticamente apresentadas em Português de Portugal:
+
+```php
+// Mensagens de validação
+$validator = Validator::make($data, [
+    'email' => 'required|email',
+    'name' => 'required|string|max:255'
+]);
+
+// Mensagens de autenticação
+Auth::attempt($credentials);
+
+// Paginação
+$users = User::paginate(15);
+```
+
+## 🌟 Exemplos de Traduções
+
+### Validação
+```
+- "O campo e-mail é obrigatório." (pt-BR)
++ "O campo correio electrónico é obrigatório." (pt-PT)
+
+- "A confirmação da senha não confere." (pt-BR) 
++ "A confirmação da palavra-passe não confere." (pt-PT)
+```
+
+### Autenticação
+```
+- "Essas credenciais não conferem com nossos registros." (pt-BR)
++ "Estas credenciais não conferem com os nossos registos." (pt-PT)
+```
+
+### Atributos Personalizados
+O pacote inclui traduções para atributos comuns:
+
+- `email` → `correio electrónico`
+- `password` → `palavra-passe`
+- `phone` → `telefone`
+- `mobile` → `telemóvel`
+- `address` → `morada`
+
+## 🔧 Personalização
+
+Pode personalizar as traduções editando os ficheiros em `resources/lang/pt_PT/` após a publicação.
+
+### Adicionar traduções personalizadas:
+
+```php
+// resources/lang/pt_PT/validation.php
+'custom' => [
+    'email' => [
+        'required' => 'Por favor insira o seu endereço de correio electrónico.',
+    ],
+],
+```
+
+## 🤝 Contribuição
+
+Contribuições são muito bem-vindas! Para contribuir:
+
+1. Faça um Fork do projecto
+2. Crie uma branch para a sua funcionalidade (`git checkout -b feature/nova-funcionalidade`)
+3. Commit as suas alterações (`git commit -am 'Adiciona nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+5. Crie um Pull Request
+
+### Como contribuir com traduções:
+
+- Verifique a consistência terminológica com o português europeu
+- Mantenha a formalidade adequada (uso de "Vossa Excelência" vs "Você")
+- Teste as traduções em diferentes contextos
+
+## 📜 Licença
+
+Este projecto está licenciado sob a [Licença MIT](LICENSE.md).
+
+## 👨‍💻 Autor
+
+**Arnaldo Tomo**
+- GitHub: [@arnaldotomo](https://github.com/arnaldotomo)
+- LinkedIn: [Arnaldo Tomo](https://linkedin.com/in/arnaldotomo)
+
+## 🙏 Agradecimentos
+
+Inspirado no excelente trabalho de [lucascudo/laravel-pt-BR-localization](https://github.com/lucascudo/laravel-pt-BR-localization) para português brasileiro.
+
+## 📊 Estatísticas
+
+- ✅ 100+ mensagens traduzidas
+- 🎯 Terminologia consistente com português europeu
+- 🔄 Actualização regular com novas versões do Laravel
+- 📱 Suporte completo para aplicações web e mobile
+
+---
+
+🇵🇹 **Feito com ❤️ em Moçambique para a comunidade lusófona**
