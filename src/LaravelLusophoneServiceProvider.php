@@ -174,8 +174,37 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
             $this->app->make(JetstreamIntegration::class)->register();
         }
 
+        // Register translation interceptor
+        $this->registerTranslationInterceptor();
+
         // Override Laravel's default translations if configured
         $this->overrideLaravelTranslations();
+    }
+
+    protected function registerTranslationInterceptor(): void
+    {
+        // Hook into Laravel's translation system
+        $this->app['translator']->addNamespace('lusophone', __DIR__.'/../resources/lang');
+        
+        // Extend the translator to intercept common phrases
+        $this->app->extend('translator', function ($translator, $app) {
+            $originalGet = $translator->get(...);
+            
+            // Override the get method to intercept translations
+            $translator->macro('get', function ($key, array $replace = [], $locale = null, $fallback = true) use ($originalGet) {
+                // Try our interceptor first
+                $intercepted = TranslationInterceptor::intercept($key, $replace, $locale);
+                
+                if ($intercepted !== null) {
+                    return $intercepted;
+                }
+                
+                // Fall back to Laravel's default behavior
+                return $originalGet($key, $replace, $locale, $fallback);
+            });
+            
+            return $translator;
+        });
     }
 
     protected function overrideLaravelTranslations(): void

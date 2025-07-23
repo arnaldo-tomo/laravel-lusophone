@@ -65,16 +65,23 @@ class BreezeIntegration
             return "<?php echo '{$field}'; ?>";
         });
 
-        // @validate directive for regional validation rules
-        Blade::directive('validate', function ($expression) {
-            $field = str_replace(['(', ')', "'", '"'], '', $expression);
+        // @translate directive for explicit regional translation
+        Blade::directive('translate', function ($expression) {
+            return "<?php echo ArnaldoTomo\\LaravelLusophone\\TranslationInterceptor::intercept({$expression}) ?? __({$expression}); ?>";
+        });
+
+        // @regional directive for region-specific content
+        Blade::directive('regional', function ($expression) {
+            return "<?php echo ArnaldoTomo\\LaravelLusophone\\Facades\\Lusophone::translate({$expression}); ?>";
+        });
+
+        // @contextual directive for cultural context
+        Blade::directive('contextual', function ($expression) {
+            $parts = explode(',', str_replace(['(', ')', "'", '"'], '', $expression));
+            $key = trim($parts[0]);
+            $context = trim($parts[1] ?? 'general');
             
-            return match($field) {
-                'tax_id' => "<?php echo 'required|lusophone_tax_id'; ?>",
-                'phone' => "<?php echo 'required|lusophone_phone'; ?>",
-                'postal_code' => "<?php echo 'required|lusophone_postal'; ?>",
-                default => "<?php echo 'required'; ?>",
-            };
+            return "<?php echo ArnaldoTomo\\LaravelLusophone\\Facades\\Lusophone::contextualTranslate('{$key}', '{$context}'); ?>";
         });
     }
 

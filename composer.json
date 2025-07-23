@@ -1,7 +1,7 @@
 {
-    "name": "arnaldotomo/laravel-lusophonev",
-    "version": "1.0.1",
-    "description": "The complete Portuguese localization package for Laravel applications. Automatically adapts to all Lusophone countries with smart region detection, cultural context awareness, and comprehensive validation rules. Now with seamless Breeze and Jetstream integration.",
+    "name": "arnaldotomo/laravel-lusophone",
+    "version": "1.0.2",
+    "description": "The complete Portuguese localization package for Laravel applications. Automatically translates ALL application text and adapts to all Lusophone countries with smart region detection, cultural context awareness, and comprehensive validation rules. Now with universal translation system!",
     "keywords": [
         "laravel",
         "localization",
@@ -28,7 +28,7 @@
     "authors": [
         {
             "name": "Arnaldo Tomo",
-            "email": "arnaldotomo@gmail.com",
+            "email": "arnaldotomo.dev@gmail.com",
             "homepage": "https://arnaldotomo.dev",
             "role": "Developer"
         }
