@@ -1,5 +1,4 @@
 <?php
-
 namespace ArnaldoTomo\LaravelLusophone;
 
 use Illuminate\Support\Facades\Lang;

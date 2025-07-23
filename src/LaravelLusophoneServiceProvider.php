@@ -5,6 +5,7 @@ namespace ArnaldoTomo\LaravelLusophone;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Lang;
 use ArnaldoTomo\LaravelLusophone\Integrations\BreezeIntegration;
 use ArnaldoTomo\LaravelLusophone\Integrations\JetstreamIntegration;
 
@@ -12,6 +13,9 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // AUTO-PUBLISH: Publica automaticamente os ficheiros na instalação
+        $this->autoPublishAssets();
+
         $this->publishes([
             __DIR__.'/../resources/lang' => $this->app->langPath(),
         ], 'lusophone-lang');
@@ -34,6 +38,9 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
         $this->autoDetectAndSetLocale();
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'lusophone');
         $this->registerIntegrations();
+        
+        // NOVO: Sistema de tradução universal automática
+        $this->registerUniversalTranslationSystem();
     }
 
     public function register(): void
@@ -46,6 +53,9 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
         $this->app->singleton(CurrencyFormatter::class);
         $this->app->singleton(LusophoneTranslator::class);
 
+        // NOVO: Sistema de tradução universal
+        $this->app->singleton(TranslationInterceptor::class);
+
         // Register integrations
         $this->app->singleton(BreezeIntegration::class);
         $this->app->singleton(JetstreamIntegration::class);
@@ -53,6 +63,62 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
         // Register main manager
         $this->app->bind('lusophone', function ($app) {
             return $app->make(LusophoneManager::class);
+        });
+    }
+
+    /**
+     * AUTO-PUBLISH: Publica automaticamente os assets na primeira instalação
+     */
+    protected function autoPublishAssets(): void
+    {
+        // Verificar se é a primeira instalação
+        if (!file_exists($this->app->langPath('pt'))) {
+            // Publicar ficheiros de idioma automaticamente
+            $this->publishes([
+                __DIR__.'/../resources/lang' => $this->app->langPath(),
+            ], 'lusophone-lang');
+            
+            // Auto-publish se não estiver em testing
+            if (!$this->app->environment('testing')) {
+                $this->callAfterResolving('Illuminate\Contracts\Console\Kernel', function ($kernel) {
+                    $kernel->call('vendor:publish', [
+                        '--tag' => 'lusophone-lang',
+                        '--force' => false
+                    ]);
+                });
+            }
+        }
+    }
+
+    /**
+     * NOVO: Sistema de tradução universal que interceta TODOS os __(  )
+     */
+    protected function registerUniversalTranslationSystem(): void
+    {
+        // Interceptar o sistema de tradução do Laravel
+        $this->app->extend('translator', function ($translator, $app) {
+            // Guardar o método original
+            $originalGet = [$translator, 'get'];
+            
+            // Sobrescrever o método get para interceptar traduções
+            $translator->macro('getOriginal', function ($key, array $replace = [], $locale = null, $fallback = true) use ($originalGet) {
+                return call_user_func($originalGet, $key, $replace, $locale, $fallback);
+            });
+            
+            // Novo método get com interceptação
+            $translator->macro('get', function ($key, array $replace = [], $locale = null, $fallback = true) use ($translator, $app) {
+                // Tentar tradução automática primeiro
+                $intercepted = $app->make(TranslationInterceptor::class)->intercept($key, $replace, $locale);
+                
+                if ($intercepted !== null) {
+                    return $intercepted;
+                }
+                
+                // Se não encontrou, usar o método original do Laravel
+                return $translator->getOriginal($key, $replace, $locale, $fallback);
+            });
+            
+            return $translator;
         });
     }
 
@@ -99,9 +165,9 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
             return app(CurrencyFormatter::class)->formatNumber($number, $decimals, $region);
         });
 
-        // Add translation macro
+        // NOVO: Macro de tradução universal
         \Illuminate\Support\Str::macro('lusophoneTranslate', function ($key, $replace = [], $region = null) {
-            return app(LusophoneTranslator::class)->translate($key, $replace, $region);
+            return app(TranslationInterceptor::class)->intercept($key, $replace, $region) ?? __($key, $replace);
         });
 
         \Illuminate\Support\Collection::macro('lusophoneCountries', function () {
@@ -174,37 +240,8 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
             $this->app->make(JetstreamIntegration::class)->register();
         }
 
-        // Register translation interceptor
-        $this->registerTranslationInterceptor();
-
         // Override Laravel's default translations if configured
         $this->overrideLaravelTranslations();
-    }
-
-    protected function registerTranslationInterceptor(): void
-    {
-        // Hook into Laravel's translation system
-        $this->app['translator']->addNamespace('lusophone', __DIR__.'/../resources/lang');
-        
-        // Extend the translator to intercept common phrases
-        $this->app->extend('translator', function ($translator, $app) {
-            $originalGet = $translator->get(...);
-            
-            // Override the get method to intercept translations
-            $translator->macro('get', function ($key, array $replace = [], $locale = null, $fallback = true) use ($originalGet) {
-                // Try our interceptor first
-                $intercepted = TranslationInterceptor::intercept($key, $replace, $locale);
-                
-                if ($intercepted !== null) {
-                    return $intercepted;
-                }
-                
-                // Fall back to Laravel's default behavior
-                return $originalGet($key, $replace, $locale, $fallback);
-            });
-            
-            return $translator;
-        });
     }
 
     protected function overrideLaravelTranslations(): void
