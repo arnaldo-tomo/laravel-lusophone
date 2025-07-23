@@ -15,11 +15,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Auto Detection
+    | Smart Environment Detection
     |--------------------------------------------------------------------------
     |
-    | Enable automatic detection of user's region based on IP address,
-    | HTTP headers, and browser language preferences.
+    | When enabled, the package automatically detects:
+    | - LOCAL environments: Defaults to Mozambique (MZ)
+    | - ONLINE environments: Auto-detects user's country via IP/headers
     |
     */
 
@@ -32,6 +33,7 @@ return [
     |
     | Automatically set Laravel's locale based on detected region.
     | When enabled, the package will set App::setLocale() automatically.
+    | Perfect for Breeze and Jetstream integration.
     |
     */
 
@@ -42,12 +44,13 @@ return [
     | Default Region
     |--------------------------------------------------------------------------
     |
-    | The default region to use when detection fails or is disabled.
+    | The default region for local development and fallback scenarios.
+    | Changed to MZ (Mozambique) as primary development environment.
     | Supported regions: PT, BR, MZ, AO, CV, GW, ST, TL
     |
     */
 
-    'default_region' => env('LUSOPHONE_DEFAULT_REGION', 'PT'),
+    'default_region' => env('LUSOPHONE_DEFAULT_REGION', 'MZ'),
 
     /*
     |--------------------------------------------------------------------------
@@ -63,6 +66,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Breeze & Jetstream Integration
+    |--------------------------------------------------------------------------
+    |
+    | Enable seamless integration with Laravel Breeze and Jetstream.
+    | This automatically adapts authentication and form validation messages.
+    |
+    */
+
+    'breeze_integration' => env('LUSOPHONE_BREEZE_INTEGRATION', true),
+    'jetstream_integration' => env('LUSOPHONE_JETSTREAM_INTEGRATION', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cultural Context
     |--------------------------------------------------------------------------
     |
@@ -72,6 +88,24 @@ return [
     */
 
     'cultural_context' => env('LUSOPHONE_CULTURAL_CONTEXT', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Smart Local Detection
+    |--------------------------------------------------------------------------
+    |
+    | Configure how the package detects local vs online environments.
+    | This ensures MZ defaults locally while maintaining online auto-detection.
+    |
+    */
+
+    'local_detection' => [
+        'enabled' => env('LUSOPHONE_LOCAL_DETECTION', true),
+        'default_local_region' => env('LUSOPHONE_LOCAL_REGION', 'MZ'),
+        'detect_dev_ports' => env('LUSOPHONE_DETECT_DEV_PORTS', true),
+        'local_domains' => ['.local', '.test', '.localhost', 'localhost'],
+        'dev_ports' => [8000, 8080, 3000, 5173, 5174, 9000],
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -112,6 +146,13 @@ return [
     */
 
     'regions' => [
+        'MZ' => [
+            'enabled' => true,
+            'locale' => 'pt_MZ',
+            'timezone' => 'Africa/Maputo',
+            'formality_default' => 'mixed',
+            'primary_development' => true, // Indicates this is the primary dev region
+        ],
         'PT' => [
             'enabled' => true,
             'locale' => 'pt_PT',
@@ -123,12 +164,6 @@ return [
             'locale' => 'pt_BR',
             'timezone' => 'America/Sao_Paulo',
             'formality_default' => 'informal',
-        ],
-        'MZ' => [
-            'enabled' => true,
-            'locale' => 'pt_MZ',
-            'timezone' => 'Africa/Maputo',
-            'formality_default' => 'mixed',
         ],
         'AO' => [
             'enabled' => true,
@@ -164,6 +199,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Laravel Integration
+    |--------------------------------------------------------------------------
+    |
+    | Configure deep integration with Laravel's authentication and UI packages.
+    |
+    */
+
+    'laravel_integration' => [
+        'override_auth_translations' => env('LUSOPHONE_OVERRIDE_AUTH', true),
+        'override_validation_translations' => env('LUSOPHONE_OVERRIDE_VALIDATION', true),
+        'override_pagination_translations' => env('LUSOPHONE_OVERRIDE_PAGINATION', true),
+        'override_password_translations' => env('LUSOPHONE_OVERRIDE_PASSWORDS', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Debug Settings
     |--------------------------------------------------------------------------
     |
@@ -174,6 +225,7 @@ return [
     'debug' => [
         'log_detections' => env('LUSOPHONE_LOG_DETECTIONS', false),
         'show_detection_headers' => env('LUSOPHONE_DEBUG_HEADERS', false),
+        'log_environment_detection' => env('LUSOPHONE_LOG_ENV_DETECTION', true),
     ],
 
 ];

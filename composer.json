@@ -1,6 +1,7 @@
 {
-    "name": "arnaldotomo/laravel-lusophone",
-    "description": "The complete Portuguese localization package for Laravel applications. Automatically adapts to all Lusophone countries with smart region detection, cultural context awareness, and comprehensive validation rules.",
+    "name": "arnaldotomo/laravel-lusophonev",
+    "version": "1.0.1",
+    "description": "The complete Portuguese localization package for Laravel applications. Automatically adapts to all Lusophone countries with smart region detection, cultural context awareness, and comprehensive validation rules. Now with seamless Breeze and Jetstream integration.",
     "keywords": [
         "laravel",
         "localization",
@@ -17,14 +18,17 @@
         "nuit",
         "cpf",
         "i18n",
-        "l10n"
+        "l10n",
+        "breeze",
+        "jetstream",
+        "authentication"
     ],
     "type": "library",
     "license": "MIT",
     "authors": [
         {
             "name": "Arnaldo Tomo",
-            "email": "arnaldotomo.dev@gmail.com",
+            "email": "arnaldotomo@gmail.com",
             "homepage": "https://arnaldotomo.dev",
             "role": "Developer"
         }

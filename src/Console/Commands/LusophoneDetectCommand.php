@@ -4,6 +4,7 @@ namespace ArnaldoTomo\LaravelLusophone\Console\Commands;
 
 use Illuminate\Console\Command;
 use ArnaldoTomo\LaravelLusophone\Facades\Lusophone;
+use ArnaldoTomo\LaravelLusophone\RegionDetector;
 use Illuminate\Support\Str;
 
 class LusophoneDetectCommand extends Command
@@ -12,17 +13,22 @@ class LusophoneDetectCommand extends Command
                            {--region= : Test specific region}
                            {--clear-cache : Clear detection cache}
                            {--test-validation : Test validation rules}
-                           {--test-currency : Test currency formatting}';
+                           {--test-currency : Test currency formatting}
+                           {--show-environment : Show environment detection details}';
 
     protected $description = 'Test Lusophone region detection and functionality';
 
     public function handle()
     {
-        $this->info('🔍 Laravel Lusophone Detection Test');
+        $this->info('🔍 Laravel Lusophone Detection Test v1.0.1');
         $this->newLine();
 
         if ($this->option('clear-cache')) {
             $this->clearCache();
+        }
+
+        if ($this->option('show-environment')) {
+            $this->showEnvironmentDetails();
         }
 
         if ($region = $this->option('region')) {
@@ -53,15 +59,50 @@ class LusophoneDetectCommand extends Command
         $this->newLine();
     }
 
+    protected function showEnvironmentDetails()
+    {
+        $this->info('🌍 Environment Detection Details:');
+        
+        $detector = app(RegionDetector::class);
+        $environmentType = $detector->getEnvironmentType();
+        
+        $this->table(['Property', 'Value'], [
+            ['Environment Type', $environmentType],
+            ['App Environment', app()->environment()],
+            ['Request IP', request()->ip()],
+            ['Request Host', request()->getHost()],
+            ['Request Port', request()->getPort()],
+            ['User Agent', substr(request()->userAgent() ?? 'N/A', 0, 50) . '...'],
+            ['Accept Language', request()->header('Accept-Language', 'N/A')],
+            ['CF-IPCountry Header', request()->header('CF-IPCountry', 'N/A')],
+            ['App Timezone', config('app.timezone')],
+        ]);
+        
+        $this->newLine();
+        
+        if ($environmentType === 'local') {
+            $this->line('   🏠 <fg=green>LOCAL ENVIRONMENT DETECTED</fg=green>');
+            $this->line('   → Defaulting to Mozambique (MZ) as configured');
+        } else {
+            $this->line('   🌐 <fg=blue>ONLINE ENVIRONMENT DETECTED</fg=blue>');
+            $this->line('   → Performing intelligent region detection');
+        }
+        
+        $this->newLine();
+    }
+
     protected function testCurrentDetection()
     {
         $this->info('🎯 Current Detection Results:');
         
         try {
+            $detector = app(RegionDetector::class);
             $region = Lusophone::detectRegion();
             $info = Lusophone::getCountryInfo($region);
+            $environmentType = $detector->getEnvironmentType();
             
-            $this->line("   Region: {$region}");
+            $this->line("   Environment: <fg=yellow>{$environmentType}</fg=yellow>");
+            $this->line("   Region: <fg=green>{$region}</fg=green>");
             $this->line("   Country: {$info['name']}");
             $this->line("   Currency: {$info['currency']} ({$info['currency_symbol']})");
             $this->line("   Phone Prefix: {$info['phone_prefix']}");
@@ -71,8 +112,15 @@ class LusophoneDetectCommand extends Command
             $taxField = Lusophone::getTaxIdFieldName($region);
             $phoneField = Lusophone::getPhoneFieldName($region);
             
-            $this->line("   Tax ID Field: {$taxField}");
-            $this->line("   Phone Field: {$phoneField}");
+            $this->line("   Tax ID Field: <fg=cyan>{$taxField}</fg=cyan>");
+            $this->line("   Phone Field: <fg=cyan>{$phoneField}</fg=cyan>");
+            
+            // Show detection logic used
+            if ($environmentType === 'local') {
+                $this->line("   <fg=yellow>Detection Logic: Local environment → MZ default</fg=yellow>");
+            } else {
+                $this->line("   <fg=yellow>Detection Logic: Online environment → IP/Headers/Language</fg=yellow>");
+            }
             
         } catch (\Exception $e) {
             $this->error("❌ Detection failed: {$e->getMessage()}");
@@ -87,7 +135,7 @@ class LusophoneDetectCommand extends Command
         
         if (!Lusophone::isLusophoneCountry($region)) {
             $this->error("❌ Invalid region: {$region}");
-            $this->line('   Valid regions: PT, BR, MZ, AO, CV, GW, ST, TL');
+            $this->line('   Valid regions: MZ, PT, BR, AO, CV, GW, ST, TL');
             return;
         }
 
@@ -106,6 +154,7 @@ class LusophoneDetectCommand extends Command
             ['Formality Level', $info['formality']],
             ['Tax ID Field', Lusophone::getTaxIdFieldName($region)],
             ['Phone Field', Lusophone::getPhoneFieldName($region)],
+            ['Primary Development', $region === 'MZ' ? 'Yes' : 'No'],
         ]);
 
         $this->newLine();
@@ -118,15 +167,15 @@ class LusophoneDetectCommand extends Command
         $region = Lusophone::detectRegion();
         
         $testCases = [
+            'MZ' => [  // MZ first as primary development region
+                'tax_id' => '123456789',
+                'phone' => '821234567', 
+                'postal_code' => '1100'
+            ],
             'PT' => [
                 'tax_id' => '123456789',
                 'phone' => '912345678',
                 'postal_code' => '1000-001'
-            ],
-            'MZ' => [
-                'tax_id' => '123456789',
-                'phone' => '821234567', 
-                'postal_code' => '1100'
             ],
             'BR' => [
                 'tax_id' => '11144477735',
@@ -144,8 +193,6 @@ class LusophoneDetectCommand extends Command
             $this->line("   Testing {$testRegion}:");
             
             foreach ($tests as $type => $value) {
-                $method = 'validate' . ucfirst(str_replace('_', '', $type));
-                
                 try {
                     $result = match($type) {
                         'tax_id' => Lusophone::validateTaxId($value, $testRegion),
@@ -155,7 +202,14 @@ class LusophoneDetectCommand extends Command
                     };
                     
                     $status = $result ? '✅' : '❌';
-                    $this->line("     {$type}: {$value} {$status}");
+                    $fieldName = match($type) {
+                        'tax_id' => Lusophone::getTaxIdFieldName($testRegion),
+                        'phone' => Lusophone::getPhoneFieldName($testRegion),
+                        'postal_code' => 'Código Postal',
+                        default => $type
+                    };
+                    
+                    $this->line("     {$fieldName}: {$value} {$status}");
                     
                 } catch (\Exception $e) {
                     $this->line("     {$type}: {$value} ❌ (Error: {$e->getMessage()})");
@@ -172,11 +226,15 @@ class LusophoneDetectCommand extends Command
         $amount = 1234.56;
         $countries = Lusophone::getAllCountries();
         
+        // Reorder to show MZ first
+        $orderedCountries = ['MZ' => $countries['MZ']] + $countries;
+        
         $rows = [];
-        foreach ($countries as $code => $info) {
+        foreach ($orderedCountries as $code => $info) {
             try {
                 $formatted = Lusophone::formatCurrency($amount, $code);
-                $rows[] = [$code, $info['name'], $formatted];
+                $isPrimary = $code === 'MZ' ? ' (Primary Dev)' : '';
+                $rows[] = [$code, $info['name'] . $isPrimary, $formatted];
             } catch (\Exception $e) {
                 $rows[] = [$code, $info['name'], "Error: {$e->getMessage()}"]; 
             }
@@ -190,6 +248,21 @@ class LusophoneDetectCommand extends Command
         
         $macroResult = Str::lusophoneCurrency($amount);
         $this->line("   Str::lusophoneCurrency({$amount}): {$macroResult}");
+        
+        $this->newLine();
+        
+        // Show environment-specific behavior
+        $detector = app(RegionDetector::class);
+        $envType = $detector->getEnvironmentType();
+        
+        $this->info('🌍 Environment-Specific Behavior:');
+        $this->line("   Current Environment: {$envType}");
+        
+        if ($envType === 'local') {
+            $this->line("   → Currency defaults to MT (Mozambican Metical)");
+        } else {
+            $this->line("   → Currency auto-detects based on user location");
+        }
         
         $this->newLine();
     }

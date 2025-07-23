@@ -5,6 +5,8 @@ namespace ArnaldoTomo\LaravelLusophone;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\App;
+use ArnaldoTomo\LaravelLusophone\Integrations\BreezeIntegration;
+use ArnaldoTomo\LaravelLusophone\Integrations\JetstreamIntegration;
 
 class LaravelLusophoneServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,7 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
         $this->registerLusophoneMacros();
         $this->autoDetectAndSetLocale();
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'lusophone');
+        $this->registerIntegrations();
     }
 
     public function register(): void
@@ -41,7 +44,11 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
         $this->app->singleton(RegionDetector::class);
         $this->app->singleton(ValidationManager::class);
         $this->app->singleton(CurrencyFormatter::class);
-        $this->app->singleton(LusophoneTranslator::class);  // Added translator
+        $this->app->singleton(LusophoneTranslator::class);
+
+        // Register integrations
+        $this->app->singleton(BreezeIntegration::class);
+        $this->app->singleton(JetstreamIntegration::class);
 
         // Register main manager
         $this->app->bind('lusophone', function ($app) {
@@ -99,10 +106,10 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Collection::macro('lusophoneCountries', function () {
             return collect([
+                'MZ' => 'Moçambique',     // MZ first as primary development region
                 'PT' => 'Portugal',
                 'BR' => 'Brasil', 
                 'AO' => 'Angola',
-                'MZ' => 'Moçambique',
                 'CV' => 'Cabo Verde',
                 'GW' => 'Guiné-Bissau',
                 'ST' => 'São Tomé e Príncipe',
@@ -120,19 +127,79 @@ class LaravelLusophoneServiceProvider extends ServiceProvider
         $detector = app(RegionDetector::class);
         $region = $detector->detect();
         
+        // Log environment detection for debugging
+        if (config('lusophone.debug.log_environment_detection', true)) {
+            \Illuminate\Support\Facades\Log::info('Laravel Lusophone: Environment detection', [
+                'environment_type' => $detector->getEnvironmentType(),
+                'detected_region' => $region,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        }
+        
         $localeMap = [
-            'PT' => 'pt_PT', 'MZ' => 'pt_MZ', 'AO' => 'pt_AO',
-            'BR' => 'pt_BR', 'CV' => 'pt_CV', 'GW' => 'pt_GW',
-            'ST' => 'pt_ST', 'TL' => 'pt_TL',
+            'MZ' => 'pt_MZ',    // Primary locale
+            'PT' => 'pt_PT', 
+            'AO' => 'pt_AO',
+            'BR' => 'pt_BR', 
+            'CV' => 'pt_CV', 
+            'GW' => 'pt_GW',
+            'ST' => 'pt_ST', 
+            'TL' => 'pt_TL',
         ];
 
-        $locale = $localeMap[$region] ?? 'pt_PT';
+        $locale = $localeMap[$region] ?? 'pt_MZ';
 
         if (config('lusophone.auto_set_locale', true)) {
             App::setLocale($locale);
+            
+            // Also set fallback locale to ensure proper Portuguese is used
+            App::setFallbackLocale('pt');
         }
 
         config(['lusophone.detected_region' => $region]);
         config(['lusophone.detected_locale' => $locale]);
+        config(['lusophone.environment_type' => $detector->getEnvironmentType()]);
+    }
+
+    protected function registerIntegrations(): void
+    {
+        // Register Breeze integration if enabled
+        if (config('lusophone.breeze_integration', true)) {
+            $this->app->make(BreezeIntegration::class)->register();
+        }
+
+        // Register Jetstream integration if enabled  
+        if (config('lusophone.jetstream_integration', true)) {
+            $this->app->make(JetstreamIntegration::class)->register();
+        }
+
+        // Override Laravel's default translations if configured
+        $this->overrideLaravelTranslations();
+    }
+
+    protected function overrideLaravelTranslations(): void
+    {
+        $integrationConfig = config('lusophone.laravel_integration', []);
+
+        // Override auth translations
+        if ($integrationConfig['override_auth_translations'] ?? true) {
+            $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'auth');
+        }
+
+        // Override validation translations
+        if ($integrationConfig['override_validation_translations'] ?? true) {
+            $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'validation');
+        }
+
+        // Override pagination translations
+        if ($integrationConfig['override_pagination_translations'] ?? true) {
+            $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'pagination');
+        }
+
+        // Override password reset translations
+        if ($integrationConfig['override_password_translations'] ?? true) {
+            $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'passwords');
+        }
     }
 }

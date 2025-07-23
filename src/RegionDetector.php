@@ -37,10 +37,72 @@ class RegionDetector
             return $this->validateRegion($cached);
         }
 
-        $detectedRegion = $this->detectFromMultipleSources();
+        $detectedRegion = $this->detectEnvironmentBasedRegion();
         session(['lusophone_region' => $detectedRegion]);
 
         return $detectedRegion;
+    }
+
+    /**
+     * Smart environment-based detection
+     * LOCAL: defaults to MZ, ONLINE: auto-detects
+     */
+    protected function detectEnvironmentBasedRegion(): string
+    {
+        // Check if we're in local environment
+        if ($this->isLocalEnvironment()) {
+            Log::info('Laravel Lusophone: Local environment detected, defaulting to MZ');
+            return 'MZ';
+        }
+
+        // Online environment - perform full detection
+        return $this->detectFromMultipleSources();
+    }
+
+    /**
+     * Detect if we're running locally
+     */
+    protected function isLocalEnvironment(): bool
+    {
+        // Check if we're in local/testing environment
+        if (app()->environment(['local', 'testing'])) {
+            return true;
+        }
+
+        // Check common local IPs
+        $ip = $this->request->ip();
+        $localIps = [
+            '127.0.0.1', '::1', 'localhost',
+            '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
+            '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
+            '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.'
+        ];
+
+        foreach ($localIps as $localIp) {
+            if (str_starts_with($ip, $localIp)) {
+                return true;
+            }
+        }
+
+        // Check if running on common local domains
+        $host = $this->request->getHost();
+        $localDomains = ['.local', '.test', '.localhost', 'localhost'];
+        
+        foreach ($localDomains as $domain) {
+            if (str_contains($host, $domain)) {
+                return true;
+            }
+        }
+
+        // Check for common development ports
+        $port = $this->request->getPort();
+        $devPorts = [8000, 8080, 3000, 5173, 5174, 9000];
+        
+        if (in_array($port, $devPorts)) {
+            return true;
+        }
+
+        return false;
     }
 
     protected function detectFromMultipleSources(): string
@@ -60,12 +122,46 @@ class RegionDetector
         }
 
         if (empty($votes)) {
-            return config('lusophone.default_region', 'PT');
+            // If online but can't detect, check if user might be Mozambican
+            return $this->intelligentFallback();
         }
 
         $voteCounts = array_count_values($votes);
         arsort($voteCounts);
         return array_key_first($voteCounts);
+    }
+
+    /**
+     * Intelligent fallback for online environments
+     */
+    protected function intelligentFallback(): string
+    {
+        // Check Accept-Language for Portuguese variants
+        $acceptLanguage = $this->request->header('Accept-Language', '');
+        
+        if (str_contains($acceptLanguage, 'pt')) {
+            // If Portuguese detected but country unclear, default to MZ for African context
+            if (str_contains($acceptLanguage, 'pt-MZ') || str_contains($acceptLanguage, 'pt-AO')) {
+                return 'MZ';
+            }
+            if (str_contains($acceptLanguage, 'pt-BR')) {
+                return 'BR';
+            }
+            if (str_contains($acceptLanguage, 'pt-PT')) {
+                return 'PT';
+            }
+            
+            // Default Portuguese to MZ (African context preference)
+            return 'MZ';
+        }
+
+        // Final fallback - check timezone hints
+        $timezone = config('app.timezone');
+        if (str_contains($timezone, 'Africa')) {
+            return 'MZ';
+        }
+
+        return config('lusophone.default_region', 'MZ');
     }
 
     protected function detectFromHeaders(): ?string
@@ -74,6 +170,9 @@ class RegionDetector
             return strtoupper($country);
         }
         if ($country = $this->request->header('CloudFront-Viewer-Country')) {
+            return strtoupper($country);
+        }
+        if ($country = $this->request->header('X-Country-Code')) {
             return strtoupper($country);
         }
         return null;
@@ -93,10 +192,24 @@ class RegionDetector
         }
 
         try {
+            // Try ipapi.co first (more reliable)
             $response = Http::timeout(3)->get("https://ipapi.co/{$ip}/country/");
             
             if ($response->successful()) {
                 $country = strtoupper(trim($response->body()));
+                
+                if ($this->isLusophoneCountry($country)) {
+                    Cache::put($cacheKey, $country, now()->addDays(7));
+                    return $country;
+                }
+            }
+
+            // Fallback to ip-api.com
+            $response = Http::timeout(3)->get("http://ip-api.com/json/{$ip}?fields=countryCode");
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                $country = strtoupper($data['countryCode'] ?? '');
                 
                 if ($this->isLusophoneCountry($country)) {
                     Cache::put($cacheKey, $country, now()->addDays(7));
@@ -121,7 +234,8 @@ class RegionDetector
 
         $languageMap = [
             'pt-PT' => 'PT', 'pt-BR' => 'BR', 'pt-MZ' => 'MZ', 
-            'pt-AO' => 'AO', 'pt-CV' => 'CV', 'pt' => 'PT',
+            'pt-AO' => 'AO', 'pt-CV' => 'CV', 'pt-GW' => 'GW',
+            'pt-ST' => 'ST', 'pt-TL' => 'TL', 'pt' => 'MZ', // Default pt to MZ
         ];
 
         foreach ($languages as $lang) {
@@ -146,13 +260,13 @@ class RegionDetector
             return $region;
         }
 
-        return config('lusophone.default_region', 'PT');
+        return config('lusophone.default_region', 'MZ');
     }
 
     public function getCountryInfo(string $region = null): array
     {
         $region = $region ?: $this->detect();
-        return $this->lusophoneCountries[$region] ?? $this->lusophoneCountries['PT'];
+        return $this->lusophoneCountries[$region] ?? $this->lusophoneCountries['MZ'];
     }
 
     public function getAllCountries(): array
@@ -176,5 +290,13 @@ class RegionDetector
         session()->forget('lusophone_region');
         
         return $this;
+    }
+
+    /**
+     * Get environment type for debugging
+     */
+    public function getEnvironmentType(): string
+    {
+        return $this->isLocalEnvironment() ? 'local' : 'online';
     }
 }
