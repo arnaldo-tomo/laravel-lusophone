@@ -128,12 +128,14 @@ use Illuminate\Support\Str;
 // Formata automaticamente baseado na localização do utilizador
 $price = 1500.50;
 echo Str::lusophoneCurrency($price);
-
 // Resultados automáticos:
 // 🇵🇹 Portugal: "1.500,50 €"
 // 🇲🇿 Moçambique: "1.500,50 MT"  
 // 🇦🇴 Angola: "1.500,50 Kz"
 // 🇧🇷 Brasil: "R$ 1.500,50"
+
+echo $current = Lusophone::formatCurrency(1500.50, "MZ");
+// 🇲🇿 Moçambique: "1.500,50 MT"  
 ```
 
 ---
