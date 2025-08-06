@@ -947,7 +947,7 @@ Este package representa mais que código—é uma **ponte que conecta 260+ milh�
 ### **Suporte Profissional**
 Para implementações enterprise, integrações personalizadas ou consultoria:
 
-📧 **Email**: [arnaldotomo.dev@gmail.com](mailto:arnaldotomo.dev@gmail.com)  
+📧 **Email**: [arnaldotomo@gmail.com](mailto:arnaldotomo@gmail.com)  
 💼 **LinkedIn**: [Arnaldo Tomo](https://linkedin.com/in/arnaldotomo)  
 🌐 **Website**: [arnaldotomo.dev](https://arnaldotomo.dev)
 
@@ -961,23 +961,11 @@ Para implementações enterprise, integrações personalizadas ou consultoria:
 
 ## 🏆 **Reconhecimentos**
 
-### **Prémios e Menções**
-- 🥇 **Laravel Package of the Month** - Laravel News (Agosto 2025)
-- 🌟 **Best Open Source Project** - Africa Tech Awards 2025
-- 📰 **Featured Article** - PHP Architect Magazine
-- 🎙️ **Podcast Featured** - Laravel Podcast Episode #180
 
 ### **Cobertura Mediática**
-- 📺 **TVM Moçambique**: Entrevista sobre inovação tecnológica
-- 📰 **Jornal Público Portugal**: Artigo sobre tecnologia lusófona
+- 📺 **GDD MAPUTO**: Entrevista sobre inovação tecnológica
 - 🌐 **Laravel News**: Feature completa do package
-- 📻 **Rádio Observador**: Discussão sobre tech africana
 
-### **Comunidade Académica**
-- 🎓 **Universidade Eduardo Mondlane**: Caso de estudo em Engenharia de Software
-- 🏫 **Instituto Superior Técnico**: Projecto de referência em I18n
-- 📚 **ISCTE**: Tese de mestrado baseada no package
-- 🔬 **Centro de Investigação**: Estudo sobre localização em África
 
 ---
 
