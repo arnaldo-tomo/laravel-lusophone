@@ -6,9 +6,18 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/arnaldotomo/laravel-lusophone.svg?style=flat-square)](https://packagist.org/packages/arnaldotomo/laravel-lusophone)
 [![License](https://img.shields.io/github/license/arnaldo-tomo/laravel-lusophone?style=flat-square)](https://github.com/arnaldo-tomo/laravel-lusophone/blob/main/LICENSE.md)
 
-**A primeira biblioteca Laravel verdadeiramente abrangente para localização portuguesa.**
+## ✨ A Primeira Biblioteca Laravel Verdadeiramente Abrangente para Localização Portuguesa
 
-O Laravel Lusophone detecta automaticamente a localização dos seus utilizadores e adapta a sua aplicação ao português específico, contexto cultural e requisitos de validação locais. Construído em 🇲🇿 **Moçambique** para todo o **mundo lusófono** 🌍.
+**Detecta automaticamente a localização dos seus utilizadores e adapta a sua aplicação ao português específico, contexto cultural e requisitos de validação locais.**
+
+🇲🇿 **Construído em Moçambique para todo o mundo lusófono** 🌍
+
+---
+
+### 🚀 **[📖 DOCUMENTAÇÃO OFICIAL COMPLETA →](https://laravel-lusophone.arnaldotomo.dev)**
+
+**👆 Acesse a documentação oficial interativa com guias detalhados, exemplos práticos e API reference completa!**
+
 
 Este pacote fornece traduções completas do Laravel para **Português de Portugal (pt-PT)**, incluindo todas as mensagens de validação, autenticação, paginação e outras strings padrão do framework.
 
