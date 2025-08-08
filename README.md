@@ -14,7 +14,7 @@
 
 ---
 
-### 🚀 **[📖 DOCUMENTAÇÃO OFICIAL COMPLETA →](https://laravel-lusophone.arnaldotomo.dev)**
+### 🚀 **[📖 DOCUMENTAÇÃO OFICIAL COMPLETA →](https://laravellusophone.arnaldotomo.dev/)**
 
 **👆 Acesse a documentação oficial interativa com guias detalhados, exemplos práticos e API reference completa!**
 
